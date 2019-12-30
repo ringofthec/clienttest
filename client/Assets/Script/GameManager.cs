@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 
 public class GameManager : MonoBehaviour
 {
-    private const int WoodIndex = 3;
+    
     public class TerrainGrid {
         public int TileType;
     }
@@ -23,13 +23,39 @@ public class GameManager : MonoBehaviour
     public GameObject tableX, tableY;
     private bool isMove = false;
     private Vector3 lastMousePosition = Vector3.zero;
-    private Grid[,] grids = new Grid[128, 128];
+    private Grid[,] grids;
+    private Grid last_select_grid;
+    
+    private GameObject tableXInstance, tableYInstance;
+    public GameObject tableXObject {
+        get {
+            if (tableXInstance == null) {
+                tableXInstance = Instantiate(tableX);
+                tableXInstance.transform.SetParent(terrain);
+                tableXInstance.GetComponent<SpriteRenderer>().sortingOrder = 100;
+            }
+            return tableXInstance;
+        }
+    }
+    public GameObject tableYObject {
+        get {
+            if (tableYInstance == null) {
+                tableYInstance = Instantiate(tableY);
+                tableYInstance.transform.SetParent(terrain);
+                tableYInstance.GetComponent<SpriteRenderer>().sortingOrder = 100;
+            }
+            return tableYInstance;
+        }
+    }
     void Awake() {
         instance = this;
         instance.Init();
     }
     void Init() {
         var gridData = JsonConvert.DeserializeObject<GridData>(mapData.text);
+
+        grids = new Grid[gridData.TerrainGrid.Count, gridData.TerrainGrid[0].Count];
+
         for (var y = 0; y < gridData.TerrainGrid.Count; ++y) {
             var row = gridData.TerrainGrid[y];
             for (var x = 0 ; x < row.Count; ++x) {
@@ -58,9 +84,10 @@ public class GameManager : MonoBehaviour
                 mainCamera.position += new Vector3(delta.x / (float)Screen.width * width, delta.y / (float)Screen.height * 10, 0);
             }
         }
-        if (Input.GetMouseButtonDown(0)) {
-            RaycastHit2D hit = Physics2D.Raycast(mainCamera.GetComponent<Camera>().ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-            if (hit.collider != null) {
+        RaycastHit2D hit = Physics2D.Raycast(mainCamera.GetComponent<Camera>().ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+        if (hit.collider != null) {
+            PreView(hit.collider.GetComponentInParent<Grid>());
+            if (Input.GetMouseButtonDown(0)) {
                 CheckPlace(hit.collider.GetComponentInParent<Grid>());
             }
         }
@@ -70,31 +97,77 @@ public class GameManager : MonoBehaviour
         var pos2 = new Vector3(-0.7f, 0.35f, 0) * y;
         trans.localPosition = pos1 + pos2;
     }
-    void CheckPlace(Grid grid) {
-        if (grid == null || grid.index != WoodIndex) { return; }
-        print(grid.x + " : " + grid.y + "   " + grid.index);
-        if (grid.x > 0 && grids[grid.x - 1, grid.y].index == WoodIndex) {
-            var obj = Instantiate(tableX);
-            obj.transform.SetParent(terrain);
-            SetPosition(obj.transform, grid.x - 1, grid.y);
+
+    void PreView(Grid grid) {
+        if (last_select_grid == grid)
+            return ;
+
+        last_select_grid = grid;
+
+        tableXObject.SetActive(false);
+        tableYObject.SetActive(false);
+        if (grid == null || !grid.CanBuild()) { return; }
+        if (grid.x > 0 && grids[grid.x - 1, grid.y].CanBuild()) {
+            tableXObject.SetActive(true);
+            tableYObject.SetActive(false);
+            SetPosition(tableXObject.transform, grid.x - 1, grid.y);
             return;
         }
-        if (grid.y > 0 && grids[grid.x, grid.y - 1].index == WoodIndex) {
+        if (grid.y > 0 && grids[grid.x, grid.y - 1].CanBuild()) {
+            tableXObject.SetActive(false);
+            tableYObject.SetActive(true);
+            SetPosition(tableYObject.transform, grid.x, grid.y - 1);
+            return;
+        }
+        if (grids[grid.x + 1, grid.y] != null && grids[grid.x + 1, grid.y].CanBuild()) {
+            tableXObject.SetActive(true);
+            tableYObject.SetActive(false);
+            SetPosition(tableXObject.transform, grid.x, grid.y);
+            return;
+        }
+        if (grids[grid.x, grid.y + 1] != null && grids[grid.x, grid.y + 1].CanBuild()) {
+            tableXObject.SetActive(false);
+            tableYObject.SetActive(true);
+            SetPosition(tableYObject.transform, grid.x, grid.y);
+            return;
+        }
+    }
+    void CheckPlace(Grid grid) {
+        if (grid == null || !grid.CanBuild()) { return; }
+        if (grid.x > 0 && grids[grid.x - 1, grid.y].CanBuild()) {
+            var obj = Instantiate(tableX);;
+            obj.transform.SetParent(terrain);
+            SetPosition(obj.transform, grid.x - 1, grid.y);
+
+            grid.Used();
+            grids[grid.x - 1, grid.y].Used();
+            return;
+        }
+        if (grid.y > 0 && grids[grid.x, grid.y - 1].CanBuild()) {
             var obj = Instantiate(tableY);
             obj.transform.SetParent(terrain);
             SetPosition(obj.transform, grid.x, grid.y - 1);
+
+            grid.Used();
+            grids[grid.x, grid.y - 1].Used();
             return;
         }
-        if (grids[grid.x + 1, grid.y] != null && grids[grid.x + 1, grid.y].index == WoodIndex) {
+        if (grids[grid.x + 1, grid.y] != null && grids[grid.x + 1, grid.y].CanBuild()) {
             var obj = Instantiate(tableX);
             obj.transform.SetParent(terrain);
             SetPosition(obj.transform, grid.x, grid.y);
+
+            grid.Used();
+            grids[grid.x + 1, grid.y].Used();
             return;
         }
-        if (grids[grid.x, grid.y + 1] != null && grids[grid.x, grid.y + 1].index == WoodIndex) {
+        if (grids[grid.x, grid.y + 1] != null && grids[grid.x, grid.y + 1].CanBuild()) {
             var obj = Instantiate(tableY);
             obj.transform.SetParent(terrain);
             SetPosition(obj.transform, grid.x, grid.y);
+
+            grid.Used();
+            grids[grid.x, grid.y + 1].Used();
             return;
         }
     }

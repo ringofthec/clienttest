@@ -4,14 +4,27 @@ using UnityEngine;
 
 public class Grid : MonoBehaviour
 {
+    public static int WoodIndex = 3;
     public int x, y;
-    public int index;
+    public int TileType;
     public SpriteRenderer spriteRenderer;
     public Sprite[] sprites;
-    public void SetSprite(int index) {
-        this.index = index;
-        spriteRenderer.sprite = sprites[index];
+    private Animator anim;
+    private bool used = false;
+    public void Start() {
+        
+    }
+    public void SetSprite(int TileType) {
+        this.TileType = TileType;
+        spriteRenderer.sprite = sprites[TileType];
         spriteRenderer.gameObject.AddComponent<PolygonCollider2D>();
+        anim = spriteRenderer.gameObject.GetComponent<Animator>();
+    }
+    public bool CanBuild() {
+        return TileType == WoodIndex && !used;
+    }
+    public void Used() {
+        used = true;
     }
     public void SetPosition(int x, int y) {
         this.x = x;
