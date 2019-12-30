@@ -1,0 +1,27 @@
+1. 项目目录说明
+	Art 美术资源文件夹
+		-- Image 存放全部图片资源
+	Resources 资源文件夹
+		-- MapData 存放地图json数据
+		
+		Grid 地图地表砖块预制体
+		TableX / TableY 桌子预制体
+		
+	Scenes 场景文件夹
+		exercise 测试用场景文件
+	
+	Script 脚本文件
+		Grid 地砖脚本
+		GameManager 游戏主体脚本
+		
+	UnityPackages 第三方，这里仅仅使用了JsonNet
+	
+	
+2. 需求分析，本质上这是一个45度视角的游戏demo，常见于slg中的基地建筑摆放的基础逻辑
+   实现点 1. 摄像机不能近大远小的透视，所以必须是正交摄像机
+          2. 使用射线来判定鼠标的屏幕坐标对应的是哪个地砖
+		  3. 其余可放性判定比较简单
+		  
+3. 运行测试方法
+	打开exercise场景文件，选中场景中的GameManager对象，在Inspector面板中，有一个MapData变量，这个变量指定了要读取的地图json文件，默认是读取Resources/MapData/data.json，如需读取其他地图文件，请重新指定
+	指定地图文件后，点击开始运行即可
