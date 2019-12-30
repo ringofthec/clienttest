@@ -16,11 +16,11 @@ public class GameManager : MonoBehaviour
     }
     private static GameManager instance = null;
     public static GameManager Instance { get { return Instance; }}
-    public Transform mainCamera;
-    public Transform terrain;
-    public TextAsset mapData;
-    public Grid grid;
-    public GameObject tableX, tableY;
+    public Transform mainCamera; // 摄像机
+    public Transform terrain;   // 地形root对象
+    public TextAsset mapData;   // 地图数据json
+    public Grid grid;           // 砖块预制体
+    public GameObject tableX, tableY; // 横竖桌子
     private bool isMove = false;
     private Vector3 lastMousePosition = Vector3.zero;
     private Grid[,] grids;

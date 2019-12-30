@@ -9,7 +9,6 @@ public class Grid : MonoBehaviour
     public int TileType;
     public SpriteRenderer spriteRenderer;
     public Sprite[] sprites;
-    private Animator anim;
     private bool used = false;
     public void Start() {
         
@@ -17,8 +16,9 @@ public class Grid : MonoBehaviour
     public void SetSprite(int TileType) {
         this.TileType = TileType;
         spriteRenderer.sprite = sprites[TileType];
+
+        // 增加碰撞用于检查射线
         spriteRenderer.gameObject.AddComponent<PolygonCollider2D>();
-        anim = spriteRenderer.gameObject.GetComponent<Animator>();
     }
     public bool CanBuild() {
         return TileType == WoodIndex && !used;
